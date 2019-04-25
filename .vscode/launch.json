@@ -1,0 +1,735 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "jlink",
+            "name": "app (debug) jlink",
+            "preLaunchTask": "cargo build --example app",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app",
+            "device": "nrf52",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "monitor semihosting enable",
+                "monitor semihosting ioclient 3"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "jlink",
+            "name": "app1 (debug) jlink",
+            "preLaunchTask": "cargo build --example app1",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app1",
+            "device": "nrf52",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "monitor semihosting enable",
+                "monitor semihosting ioclient 3"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "jlink",
+            "name": "app2 (debug) jlink",
+            "preLaunchTask": "cargo build --example app2",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app2",
+            "device": "nrf52",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "monitor semihosting enable",
+                "monitor semihosting ioclient 2"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "jlink",
+            "name": "app3 (debug) jlink",
+            "preLaunchTask": "cargo build --example app3",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app3",
+            "device": "nrf52",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "monitor semihosting enable",
+                "monitor semihosting ioclient 3"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "jlink",
+            "name": "app4 (debug) jlink",
+            "preLaunchTask": "cargo build --example app4",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app4",
+            "device": "nrf52",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "monitor semihosting enable",
+                "monitor semihosting ioclient 3"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "jlink",
+            "name": "app5 (debug) jlink",
+            "preLaunchTask": "cargo build --example app5",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app5",
+            "device": "nrf52",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "monitor semihosting enable",
+                "monitor semihosting ioclient 3"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "jlink",
+            "name": "app6 (debug) jlink",
+            "preLaunchTask": "cargo build --example app6",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app6",
+            "device": "nrf52",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "monitor semihosting enable",
+                "monitor semihosting ioclient 3"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "jlink",
+            "name": "app7 (debug) jlink",
+            "preLaunchTask": "cargo build --example app7",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app7",
+            "device": "nrf52",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "monitor semihosting enable",
+                "monitor semihosting ioclient 3"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "jlink",
+            "name": "app8 (debug) jlink",
+            "preLaunchTask": "cargo build --example app8",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app8",
+            "device": "nrf52",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "monitor semihosting enable",
+                "monitor semihosting ioclient 3"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "jlink",
+            "name": "app9 (debug) jlink",
+            "preLaunchTask": "cargo build --example app9",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app9",
+            "device": "nrf52",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "monitor semihosting enable",
+                "monitor semihosting ioclient 3"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "app (debug)",
+            "preLaunchTask": "cargo build --example app",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "app1 (debug)",
+            "preLaunchTask": "cargo build --example app1",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app1",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "app2 (debug)",
+            "preLaunchTask": "cargo build --example app2",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app2",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "app3 (debug)",
+            "preLaunchTask": "cargo build --example app3",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app3",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "app4 (debug)",
+            "preLaunchTask": "cargo build --example app4",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app4",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "app5 (debug)",
+            "preLaunchTask": "cargo build --example app5",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app5",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "app6 (debug)",
+            "preLaunchTask": "cargo build --example app6",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app6",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "app7 (debug)",
+            "preLaunchTask": "cargo build --example app7",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app7",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "app8 (debug)",
+            "preLaunchTask": "cargo build --example app8",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app8",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "app9 (debug)",
+            "preLaunchTask": "cargo build --example app9",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/app9",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "pool1 (debug)",
+            "preLaunchTask": "cargo build --example pool1",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/pool1",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "pool2 (debug)",
+            "preLaunchTask": "cargo build --example pool2",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/pool2",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "pool3 (debug)",
+            "preLaunchTask": "cargo build --example pool3",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/pool3",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "name": "pool3 (release)",
+            "preLaunchTask": "cargo build --example pool3 --release",
+            "executable": "./target/thumbv7em-none-eabihf/release/examples/pool3",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        // {
+        //     "type": "cortex-debug",
+        //     "request": "launch",
+        //     "servertype": "openocd",
+        //     "name": "panic 16Mhz (debug)",
+        //     "preLaunchTask": "cargo build --example panic",
+        //     "executable": "./target/thumbv7em-none-eabihf/debug/examples/panic",
+        //     "configFiles": [
+        //         "interface/stlink.cfg",
+        //         "target/stm32f4x.cfg"
+        //     ],
+        //     "postLaunchCommands": [
+        //         "b rust_begin_unwind",
+        //         "monitor arm semihosting enable"
+        //     ],
+        //     "swoConfig": {
+        //         "enabled": true,
+        //         "cpuFrequency": 16000000,
+        //         "swoFrequency": 2000000,
+        //         "source": "probe",
+        //         "decoders": [
+        //             {
+        //                 "type": "console",
+        //                 "label": "ITM",
+        //                 "port": 0
+        //             }
+        //         ]
+        //     },
+        //     "cwd": "${workspaceRoot}"
+        // },
+        // {
+        //     "type": "cortex-debug",
+        //     "request": "launch",
+        //     "servertype": "openocd",
+        //     "name": "exception_itm 16Mhz (release)",
+        //     "preLaunchTask": "cargo build --example exception_itm --release",
+        //     "executable": "./target/thumbv7em-none-eabihf/release/examples/exception_itm",
+        //     "configFiles": [
+        //         "interface/stlink.cfg",
+        //         "target/stm32f4x.cfg"
+        //     ],
+        //     "swoConfig": {
+        //         "enabled": true,
+        //         "cpuFrequency": 16000000,
+        //         "swoFrequency": 2000000,
+        //         "source": "probe",
+        //         "decoders": [
+        //             {
+        //                 "type": "console",
+        //                 "label": "ITM",
+        //                 "port": 0
+        //             }
+        //         ]
+        //     },
+        //     "cwd": "${workspaceRoot}"
+        // },
+        // {
+        //     "type": "cortex-debug",
+        //     "request": "launch",
+        //     "servertype": "openocd",
+        //     "name": "exception_itm_raw 16Mhz (debug)",
+        //     "preLaunchTask": "cargo build --example exception_itm_raw",
+        //     "executable": "./target/thumbv7em-none-eabihf/debug/examples/exception_itm_raw",
+        //     "configFiles": [
+        //         "interface/stlink.cfg",
+        //         "target/stm32f4x.cfg"
+        //     ],
+        //     "swoConfig": {
+        //         "enabled": true,
+        //         "cpuFrequency": 16000000,
+        //         "swoFrequency": 2000000,
+        //         "source": "probe",
+        //         "decoders": [
+        //             {
+        //                 "type": "console",
+        //                 "label": "ITM",
+        //                 "port": 0
+        //             }
+        //         ]
+        //     },
+        //     "cwd": "${workspaceRoot}"
+        // },
+        // {
+        //     "type": "cortex-debug",
+        //     "request": "launch",
+        //     "servertype": "openocd",
+        //     "name": "crash (release)",
+        //     "preLaunchTask": "cargo build --example crash --release",
+        //     "executable": "./target/thumbv7em-none-eabihf/release/examples/crash",
+        //     "configFiles": [
+        //         "interface/stlink.cfg",
+        //         "target/stm32f4x.cfg"
+        //     ],
+        //     "postLaunchCommands": [
+        //         // sets a breakpoint at the HardFault (won't show in `vscode`, but `gdb` will break)
+        //         "b HardFault"
+        //     ],
+        //     "cwd": "${workspaceRoot}"
+        // },
+        // launch configuration for using an external itm viewer
+        // $ tail -f /tmp/itm.log
+        // or, prior to launching the bebug session
+        // $ mkfifo /tmp/itm.log
+        // $ itmdump -f /tmp/itm.log -F
+        // {
+        //     "type": "cortex-debug",
+        //     "request": "launch",
+        //     "servertype": "openocd",
+        //     "name": "itm 16Mhz /tmp/itm.log (debug)",
+        //     "preLaunchTask": "cargo build --example itm",
+        //     "executable": "./target/thumbv7em-none-eabihf/debug/examples/itm",
+        //     // uses local config files
+        //     "configFiles": [
+        //         "./stlink.cfg",
+        //         "./stm32f4x.cfg"
+        //     ],
+        //     "postLaunchCommands": [
+        //         // sets the core clock to 16000000 (see ./stm32f4x.cfg)
+        //         "monitor reset init",
+        //         // 16000000 must match the core clock frequency
+        //         "monitor tpiu config internal /tmp/itm.log uart off 16000000",
+        //         // enable ITM port 0
+        //         "monitor itm port 0 on"
+        //     ],
+        //     "cwd": "${workspaceRoot}"
+        // },
+        // {
+        //     "type": "cortex-debug",
+        //     "request": "launch",
+        //     "servertype": "openocd",
+        //     "name": "device (debug)",
+        //     "preLaunchTask": "cargo build --example device --features pac",
+        //     "executable": "./target/thumbv7em-none-eabihf/debug/examples/device",
+        //     // uses local config files
+        //     "configFiles": [
+        //         "./stlink.cfg",
+        //         "./stm32f4x.cfg"
+        //     ],
+        //     "postLaunchCommands": [
+        //         "monitor arm semihosting enable"
+        //     ],
+        //     "swoConfig": {
+        //         "enabled": true,
+        //         "cpuFrequency": 16000000,
+        //         "swoFrequency": 2000000,
+        //         "source": "probe",
+        //         "decoders": [
+        //             {
+        //                 "type": "console",
+        //                 "label": "ITM",
+        //                 "port": 0
+        //             }
+        //         ]
+        //     },
+        //     "svdFile": "STM32F413.svd",
+        //     "cwd": "${workspaceRoot}"
+        // },
+        // {
+        //     "type": "cortex-debug",
+        //     "request": "launch",
+        //     "servertype": "openocd",
+        //     "name": "serial (debug)",
+        //     "preLaunchTask": "cargo build --example serial",
+        //     "executable": "./target/thumbv7em-none-eabihf/debug/examples/serial",
+        //     // uses local config files
+        //     "configFiles": [
+        //         "./stlink.cfg",
+        //         "./stm32f4x.cfg"
+        //     ],
+        //     "swoConfig": {
+        //         "enabled": true,
+        //         "cpuFrequency": 16000000,
+        //         "swoFrequency": 2000000,
+        //         "source": "probe",
+        //         "decoders": [
+        //             {
+        //                 "type": "console",
+        //                 "label": "ITM",
+        //                 "port": 0
+        //             }
+        //         ]
+        //     },
+        //     "svdFile": "STM32F413.svd",
+        //     "cwd": "${workspaceRoot}"
+        // },
+    ]
+}

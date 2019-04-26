@@ -15,7 +15,8 @@ embedded-hal            = "0.2.2"
 
 [dependencies.heapless]
 version                 = "0.4.3"
-features                = ["min-const-fn"]
+#features                = ["min-const-fn"]
+features                = ["const-fn"]
 
 [dependencies.dwm1001]
 version                 = "0.2.0"

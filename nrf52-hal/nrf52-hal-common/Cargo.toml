@@ -24,7 +24,8 @@ rand_core = "0.4.0"
 
 [dependencies.heapless]
 version                 = "0.4.3"
-features                = ["min-const-fn"]
+#features                = ["min-const-fn"]
+features                = ["const-fn"]
 
 [dependencies.void]
 default-features = false

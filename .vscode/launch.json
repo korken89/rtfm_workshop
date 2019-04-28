@@ -8,6 +8,21 @@
             "type": "cortex-debug",
             "request": "launch",
             "servertype": "jlink",
+            "name": "write (debug) jlink",
+            "preLaunchTask": "cargo build --example write",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/write",
+            "device": "nrf52",
+            "interface": "swd",
+            "postLaunchCommands": [
+                "monitor semihosting enable",
+                "monitor semihosting ioclient 2"
+            ],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "jlink",
             "name": "pool (debug) jlink",
             "preLaunchTask": "cargo build --example pool",
             "executable": "./target/thumbv7em-none-eabihf/debug/examples/pool",

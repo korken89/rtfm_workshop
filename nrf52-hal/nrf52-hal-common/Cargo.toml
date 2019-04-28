@@ -24,7 +24,14 @@ rand_core = "0.4.0"
 
 [dependencies.heapless]
 version                 = "0.4.3"
+<<<<<<< HEAD
 features                = ["const-fn"]
+||||||| merged common ancestors
+features                = ["min-const-fn"]
+=======
+#features                = ["min-const-fn"]
+features                = ["const-fn"]
+>>>>>>> 7a153023d4c7923e058126ae6bd12f9ce7639098
 
 [dependencies.void]
 default-features = false

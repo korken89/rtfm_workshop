@@ -257,6 +257,34 @@
             "type": "cortex-debug",
             "request": "launch",
             "servertype": "openocd",
+            "name": "pool (debug)",
+            "preLaunchTask": "cargo build --example pool",
+            "executable": "./target/thumbv7em-none-eabihf/debug/examples/pool",
+            "configFiles": [
+                "./openocd_jlink.cfg",
+            ],
+            "postLaunchCommands": [
+                "monitor arm semihosting enable"
+            ],
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 64000000,
+                "swoFrequency": 250000,
+                "source": "probe",
+                "decoders": [
+                    {
+                        "type": "console",
+                        "label": "ITM",
+                        "port": 0
+                    }
+                ]
+            },
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
             "name": "app3 (debug)",
             "preLaunchTask": "cargo build --example app3",
             "executable": "./target/thumbv7em-none-eabihf/debug/examples/app3",

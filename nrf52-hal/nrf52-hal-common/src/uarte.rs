@@ -315,7 +315,7 @@ where
     }
 }
 
-// eoch DMA block is 4 bytes
+// DMA block is 4 bytes
 pub const DMA_SIZE: usize = 4;
 pool!(DMAPool: [u8; DMA_SIZE]);
 

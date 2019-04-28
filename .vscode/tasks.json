@@ -89,6 +89,18 @@
         },
         {
             "type": "shell",
+            "label": "cargo build --example pool",
+            "command": "cargo build --example pool",
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "shell",
             "label": "cargo build --example app2",
             "command": "cargo build --example app2",
             "problemMatcher": [

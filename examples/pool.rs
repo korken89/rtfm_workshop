@@ -12,8 +12,6 @@ use hal::target::{interrupt, UARTE0};
 use hal::{DMAPool, RXError, TXQSize, UarteRX, UarteTX, DMA_SIZE};
 
 use heapless::{
-    // consts::*,
-    // pool,
     pool::singleton::{Box, Pool},
     spsc::{Producer, Queue},
 };

@@ -45,5 +45,5 @@ debug                   = true  # symbols are nice and they don't increase the s
 lto                     = true  # better optimizations
 
 [patch.crates-io]
-nrf52-hal-common        = { path = './nrf52-hal/nrf52-hal-common' }
+#nrf52-hal-common        = { path = './nrf52-hal/nrf52-hal-common' }
 cortex-m-semihosting    = { path = "./cortex-m-semihosting"}

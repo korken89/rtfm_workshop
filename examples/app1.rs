@@ -4,6 +4,16 @@
 
 #![no_main]
 #![no_std]
+#![feature(asm, const_fn, core_intrinsics, naked_functions)]
+
+use core::sync::atomic::{self, Ordering};
+use cortex_m::asm;
+
+
+// pub use cortexm::nvic;
+// pub use cortexm::scb;
+// pub use cortexm::syscall;
+// pub use cortexm::systick;
 
 // panic handler
 extern crate panic_semihosting;
@@ -14,17 +24,155 @@ use hal::nrf52832_pac as pac;
 use pac::interrupt;
 use rtfm::app;
 
+// Return to Handler mode, exception return uses non-floating-point state
+// from the MSP and execution uses MSP after return.
+const RETURN_TO_HANDER_MODE_NO_FP_MSP: u32 = 0xFFFFFFF1;
+
+// Return to Thread mode, exception return uses non-floating-point state from
+// MSP and execution uses MSP after return.
+const RETURN_TO_HANDER_MODE_FP_MSP: u32 = 0xFFFFFFF9;
+
+// Return to Thread mode, exception return uses non-floating-point state from
+// the PSP and execution uses PSP after return.
+const RETURN_TO_THREAD_MODE_NO_FP_PSP: u32 = 0xFFFFFFFD;
+
+// Return to Handler mode, exception return uses floating-point-state from
+// MSP and execution uses MSP after return.
+const RETURN_TO_THREAD_MODE_FP_MSP: u32 = 0xFFFFFFE1;
+
+// Return to Thread mode, exception return uses floating-point state from
+// MSP and execution uses MSP after return.
+const RETURN_TO_THREAD_MODE_NO_FP_MSP: u32 = 0xFFFFFFE9;
+
+// Return to Thread mode, exception return uses floating-point state from PSP
+// and execution uses PSP after return.
+const RETURN_TO_THREAD_MODE_FP_PSP: u32 = 0xFFFFFFED;
+
+// xPSR
+// PC
+// LR
+// R12
+// R3
+// R2
+// R1
+// R0
+
+#[repr(C, align(16))]
+#[derive(Copy, Clone)]
+pub struct stack_frame {
+    align: u32,
+    //align1: u32,
+    xPSR: u32,
+    PC: u32,
+    LR: u32,
+    R12: u32,
+    R3: u32,
+    R2: u32,
+    R1: u32,
+    // aligned to 16
+    R0: u32,
+}
+
+impl stack_frame {
+    const fn new() -> stack_frame {
+        stack_frame {
+            align: 0,
+            // align1: 0,
+            xPSR: 0,
+            PC: 0,
+
+            LR: 0,
+            R12: 0,
+            R3: 0,
+            R2: 0,
+            R1: 0,
+            R0: 0,
+        }
+    }
+}
+
+// fn switch_to_user(
+//     mut user_stack: *const usize,
+//     process_regs: &mut [usize; 8],
+// ) -> *const usize {
+//     asm!("
+//     /* Load bottom of stack into Process Stack Pointer */
+//     msr psp, $0
+
+//     /* Load non-hardware-stacked registers from Process stack */
+//     /* Ensure that $2 is stored in a callee saved register */
+//     ldmia $2, {r4-r11}
+
+//     /* SWITCH */
+//     svc 0xff /* It doesn't matter which SVC number we use here */
+//     /* Push non-hardware-stacked registers into Process struct's */
+//     /* regs field */
+//     stmia $2, {r4-r11}
+
+//     mrs $0, PSP /* PSP into r0 */"
+//     : "={r0}"(user_stack)
+//     : "{r0}"(user_stack), "{r1}"(process_regs)
+//     : "r4","r5","r6","r7","r8","r9","r10","r11" : "volatile" );
+//     user_stack
+// }
+
 #[app(device = crate::hal::target)]
 const APP: () = {
+    static mut TOCKRAM: [stack_frame; 10] = [stack_frame::new(); 10];
+
     #[init]
     fn init() {
         hprintln!("init").unwrap();
         rtfm::pend(interrupt::SWI0_EGU0);
     }
-    #[idle]
+    #[idle(resources = [TOCKRAM])]
     fn idle() -> ! {
         hprintln!("idle").unwrap();
-        rtfm::pend(interrupt::SWI0_EGU0);
+
+        let user_stack = stack_frame {
+            align: 0,
+            // align1: 0,
+            xPSR: 0,
+            PC: tock_fn as u32,
+            LR: 0,
+            R12: 0,
+            R3: 0,
+            R2: 0,
+            R1: 0,
+            R0: 0,
+        };
+
+        resources.TOCKRAM[9] = user_stack;
+        hprintln!("psp = {:x?}", (&resources.TOCKRAM[9].R0) as *const u32);
+
+        unsafe {
+            asm!("
+                // Set thread mode to unprivileged 
+                // mov r0, #1
+                // msr CONTROL, r0
+                msr psp, r1
+                svc #124"
+                : : "{r1}" (&resources.TOCKRAM[9].R0) : : "volatile");
+        }
+
+        loop {}
+    }
+
+    #[exception]
+    fn SVCall() {
+        hprintln!("SVCALL");
+        unsafe {
+            asm!(
+                "
+                // Return to Thread mode, exception return uses non-floating-point state from
+                // the PSP and execution uses PSP after return.
+                movw lr, #0xfffd
+                movt lr, #0xffff
+                bx lr"
+                    : : : : "volatile"
+            );
+        }
+
         loop {}
     }
 
@@ -35,3 +183,13 @@ const APP: () = {
         hprintln!("SWIO_EGU0 {}", TIMES).unwrap();
     }
 };
+
+#[naked]
+fn tock_fn() {
+//    hprintln!("tock");
+    asm::bkpt();
+    loop {
+  //       hprintln!("tock");
+         atomic::compiler_fence(Ordering::SeqCst);
+    }
+}

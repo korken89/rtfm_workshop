@@ -49,29 +49,20 @@ const RETURN_TO_THREAD_MODE_NO_FP_MSP: u32 = 0xFFFFFFE9;
 // and execution uses PSP after return.
 const RETURN_TO_THREAD_MODE_FP_PSP: u32 = 0xFFFFFFED;
 
-// xPSR
-// PC
-// LR
-// R12
-// R3
-// R2
-// R1
-// R0
-
 #[repr(C, align(16))]
 #[derive(Copy, Clone)]
 pub struct stack_frame {
     align: u32,
     //align1: u32,
-    xPSR: u32,
-    PC: u32,
-    LR: u32,
-    R12: u32,
-    R3: u32,
-    R2: u32,
-    R1: u32,
-    // aligned to 16
     R0: u32,
+    R1: u32,
+    R2: u32,
+    R3: u32,
+    R12: u32,
+    LR: u32,
+    PC: u32,
+    xPSR: u32,
+    // aligned to 16
 }
 
 impl stack_frame {
@@ -123,27 +114,27 @@ const APP: () = {
     #[init]
     fn init() {
         hprintln!("init").unwrap();
-        rtfm::pend(interrupt::SWI0_EGU0);
+        // rtfm::pend(interrupt::SWI0_EGU0);
     }
     #[idle(resources = [TOCKRAM])]
     fn idle() -> ! {
         hprintln!("idle").unwrap();
 
         let user_stack = stack_frame {
+            R0: 0,   
+            R1: 1,
+            R2: 2,
+            R3: 3,
+            R12: 12,
+            LR: 0x0000_0001,
+            PC: tock_fn as u32,
+            xPSR: 0x0100_0000,
             align: 0,
             // align1: 0,
-            xPSR: 0x0100_0000,
-            PC: tock_fn as u32,
-            LR: tock_fn as u32,
-            R12: 0,
-            R3: 0,
-            R2: 0,
-            R1: 0,
-            R0: 0,   
         };
 
         resources.TOCKRAM[9] = user_stack;
-        hprintln!("psp = {:8x?}", (&resources.TOCKRAM[9].R0) as *const u32);
+        hprintln!("psp = {:8x?}", (&resources.TOCKRAM[9].xPSR) as *const u32);
         hprintln!("PC = {:8x?}", resources.TOCKRAM[9].PC);
 
         unsafe {
@@ -192,12 +183,12 @@ unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
     loop {}
 }
 
-#[naked]
+//#[naked]
 fn tock_fn() {
 //    hprintln!("tock");
-    asm::bkpt();
+    //asm::bkpt();
     loop {
-  //       hprintln!("tock");
-         atomic::compiler_fence(Ordering::SeqCst);
+         hprintln!("tock");
+         //atomic::compiler_fence(Ordering::SeqCst);
     }
 }

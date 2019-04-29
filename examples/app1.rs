@@ -10,7 +10,6 @@ use core::sync::atomic::{self, Ordering};
 use cortex_m::asm;
 use cortex_m_rt::ExceptionFrame;
 
-
 // pub use cortexm::nvic;
 // pub use cortexm::scb;
 // pub use cortexm::syscall;
@@ -53,7 +52,7 @@ const RETURN_TO_THREAD_MODE_FP_PSP: u32 = 0xFFFFFFED;
 #[derive(Copy, Clone)]
 pub struct stack_frame {
     align: u32,
-    //align1: u32,
+
     R0: u32,
     R1: u32,
     R2: u32,
@@ -62,14 +61,14 @@ pub struct stack_frame {
     LR: u32,
     PC: u32,
     xPSR: u32,
-    // aligned to 16
+    // highest address aligned to 16
 }
 
 impl stack_frame {
     const fn new() -> stack_frame {
         stack_frame {
             align: 0,
-            // align1: 0,
+
             xPSR: 0,
             PC: 0,
             LR: 0,
@@ -121,7 +120,7 @@ const APP: () = {
         hprintln!("idle").unwrap();
 
         let user_stack = stack_frame {
-            R0: 0,   
+            R0: 0,
             R1: 1,
             R2: 2,
             R3: 3,
@@ -130,7 +129,6 @@ const APP: () = {
             PC: tock_fn as u32,
             xPSR: 0x0100_0000,
             align: 0,
-            // align1: 0,
         };
 
         resources.TOCKRAM[9] = user_stack;
@@ -167,7 +165,7 @@ const APP: () = {
 
         loop {}
     }
-    
+
     #[interrupt]
     fn SWI0_EGU0() {
         static mut TIMES: u32 = 0;
@@ -176,7 +174,7 @@ const APP: () = {
     }
 };
 
-#[cortex_m_rt::exception] 
+#[cortex_m_rt::exception]
 unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
     hprintln!("ef : {:?}", ef);
 
@@ -185,10 +183,10 @@ unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
 
 //#[naked]
 fn tock_fn() {
-//    hprintln!("tock");
+    hprintln!("tock");
     //asm::bkpt();
     loop {
-         hprintln!("tock");
-         //atomic::compiler_fence(Ordering::SeqCst);
+        hprintln!("tock");
+        //atomic::compiler_fence(Ordering::SeqCst);
     }
 }

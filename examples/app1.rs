@@ -8,6 +8,7 @@
 
 use core::sync::atomic::{self, Ordering};
 use cortex_m::asm;
+use cortex_m_rt::ExceptionFrame;
 
 
 // pub use cortexm::nvic;
@@ -80,7 +81,6 @@ impl stack_frame {
             // align1: 0,
             xPSR: 0,
             PC: 0,
-
             LR: 0,
             R12: 0,
             R3: 0,
@@ -132,18 +132,19 @@ const APP: () = {
         let user_stack = stack_frame {
             align: 0,
             // align1: 0,
-            xPSR: 0,
+            xPSR: 0x0100_0000,
             PC: tock_fn as u32,
-            LR: 0,
+            LR: tock_fn as u32,
             R12: 0,
             R3: 0,
             R2: 0,
             R1: 0,
-            R0: 0,
+            R0: 0,   
         };
 
         resources.TOCKRAM[9] = user_stack;
-        hprintln!("psp = {:x?}", (&resources.TOCKRAM[9].R0) as *const u32);
+        hprintln!("psp = {:8x?}", (&resources.TOCKRAM[9].R0) as *const u32);
+        hprintln!("PC = {:8x?}", resources.TOCKRAM[9].PC);
 
         unsafe {
             asm!("
@@ -175,7 +176,7 @@ const APP: () = {
 
         loop {}
     }
-
+    
     #[interrupt]
     fn SWI0_EGU0() {
         static mut TIMES: u32 = 0;
@@ -183,6 +184,13 @@ const APP: () = {
         hprintln!("SWIO_EGU0 {}", TIMES).unwrap();
     }
 };
+
+#[cortex_m_rt::exception] 
+unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
+    hprintln!("ef : {:?}", ef);
+
+    loop {}
+}
 
 #[naked]
 fn tock_fn() {

@@ -11,12 +11,12 @@
 extern crate panic_semihosting;
 
 use cortex_m_semihosting::hprintln;
-use dwm1001::nrf52832_hal as hal;
 use embedded_hal::digital::OutputPin;
 use hal::gpio;
 use hal::gpio::p0::*;
 use hal::gpio::*;
 use hal::prelude::GpioExt;
+use nrf52832_hal as hal;
 use rtfm::app;
 
 const PERIOD: u32 = 64_000_000;

@@ -9,9 +9,9 @@
 extern crate panic_semihosting;
 
 use cortex_m_semihosting::hprintln;
-use dwm1001::nrf52832_hal as hal;
 use hal::nrf52832_pac as pac;
-use pac::interrupt;
+use nrf52832_hal as hal;
+use pac::Interrupt;
 use rtfm::app;
 
 #[app(device = crate::hal::target)]
@@ -22,8 +22,8 @@ const APP: () = {
     #[init]
     fn init() {
         hprintln!("init").unwrap();
-        rtfm::pend(interrupt::SWI0_EGU0);
-        rtfm::pend(interrupt::SWI1_EGU1);
+        rtfm::pend(Interrupt::SWI0_EGU0);
+        rtfm::pend(Interrupt::SWI1_EGU1);
     }
 
     #[idle]

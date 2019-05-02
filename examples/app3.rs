@@ -9,7 +9,7 @@
 extern crate panic_semihosting;
 
 use cortex_m_semihosting::hprintln;
-use dwm1001::nrf52832_hal as hal;
+use nrf52832_hal as hal;
 use rtfm::app;
 
 #[app(device = crate::hal::target)]

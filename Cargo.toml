@@ -14,13 +14,18 @@ cortex-m                = "0.5.8"
 embedded-hal            = "0.2.2"
 
 [dependencies.heapless]
-version                 = "0.4.3"
-#features                = ["min-const-fn"]
-features                = ["const-fn"]
+version                 = "0.4.4"
+features                = ["min-const-fn"]
+#features                = ["const-fn"]
 
-[dependencies.dwm1001]
-version                 = "0.2.0"
-features                = ["dev", "rt"]
+# [dependencies.dwm1001]
+# version                 = "0.2.0"
+# features                = ["dev", "rt"]
+
+[dependencies.nrf52832-hal]
+version          = "0.8.1"
+default-features = false
+features = [ "xxAA-package", "rt" ]
 
 [dependencies.cortex-m-rtfm]
 version                 = "0.4.3"
@@ -45,5 +50,5 @@ debug                   = true  # symbols are nice and they don't increase the s
 lto                     = true  # better optimizations
 
 [patch.crates-io]
-nrf52-hal-common        = { path = './nrf52-hal/nrf52-hal-common' }
+nrf52832-hal            = { path = '../nrf52-hal/nrf52832-hal' }
 cortex-m-semihosting    = { path = "./cortex-m-semihosting"}

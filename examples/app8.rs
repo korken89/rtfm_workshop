@@ -17,7 +17,6 @@ use embedded_hal::digital::OutputPin;
 use hal::gpio;
 use hal::gpio::p0::*;
 use hal::gpio::*;
-use hal::prelude::GpioExt;
 use nrf52832_hal as hal;
 use rtfm::app;
 
@@ -33,7 +32,7 @@ const APP: () = {
     fn init() -> init::LateResources {
         hprintln!("init").unwrap();
 
-        let port0 = device.P0.split();
+        let port0 = p0::Parts::new(device.P0);
         let led = port0.p0_14.into_push_pull_output(Level::High);
 
         spawn.low().unwrap();

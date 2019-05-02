@@ -7,11 +7,7 @@ extern crate panic_semihosting;
 
 use cortex_m_semihosting::hprintln;
 use dwm1001::nrf52832_hal as hal;
-
-//use hal::prelude::*;
-//use hal::target::interrupt;
 use hal::{DMAPool, TXQSize};
-
 use heapless::{
     pool::singleton::Box,
     spsc::{Consumer, Producer, Queue},

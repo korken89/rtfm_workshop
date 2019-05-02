@@ -18,9 +18,9 @@ version                 = "0.4.4"
 features                = ["min-const-fn"]
 #features                = ["const-fn"]
 
-# [dependencies.dwm1001]
-# version                 = "0.2.0"
-# features                = ["dev", "rt"]
+[dependencies.dwm1001]
+version                 = "0.2.0"
+features                = ["dev", "rt"]
 
 [dependencies.nrf52832-hal]
 version          = "0.8.1"
@@ -50,5 +50,6 @@ debug                   = true  # symbols are nice and they don't increase the s
 lto                     = true  # better optimizations
 
 [patch.crates-io]
-nrf52832-hal            = { path = '../nrf52-hal/nrf52832-hal' }
+nrf52-hal-common        = { path = '../nrf52-hal/nrf52-hal-common' }
 cortex-m-semihosting    = { path = "./cortex-m-semihosting"}
+dwm1001                 = { path = "../rust-dwm1001"}

@@ -7,7 +7,7 @@ extern crate panic_semihosting;
 use cortex_m_semihosting::hprintln;
 use dwm1001::{new_usb_uarte, nrf52832_hal as hal, UsbUarteConfig};
 
-use hal::prelude::*;
+use hal::gpio::*;
 use hal::target::{interrupt, UARTE0};
 use hal::{DMAPool, RXError, TXQSize, UarteRX, UarteTX, DMA_SIZE};
 
@@ -38,7 +38,7 @@ const APP: () = {
         // move MEMORY to P (the DMA buffer allocator)
         DMAPool::grow(MEMORY);
 
-        let port0 = device.P0.split();
+        let port0 = p0::Parts::new(device.P0);
         let uarte0 = new_usb_uarte(
             device.UARTE0,             // the actual UART
             port0.p0_05,               // txd

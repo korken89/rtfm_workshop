@@ -9,9 +9,10 @@ use dwm1001::{new_usb_uarte, nrf52832_hal as hal, UsbUarteConfig};
 
 use hal::gpio::*;
 use hal::target::{interrupt, UARTE0};
-use hal::{DMAPool, RXError, TXQSize, UarteRX, UarteTX, DMA_SIZE};
+use hal::{DMAPool, RXError, UarteRX, UarteTX, DMA_SIZE};
 
 use heapless::{
+    consts::*,
     pool::singleton::{Box, Pool},
     spsc::{Producer, Queue},
 };
@@ -21,10 +22,13 @@ use rtfm::app;
 const NR_PACKAGES: usize = 10;
 const DMA_MEM: usize = DMA_SIZE * NR_PACKAGES + 16;
 
+// number of output buffers that the driver should provide
+type TXQSize = U3;
+
 #[app(device = crate::hal::target)]
 const APP: () = {
     static mut RX: UarteRX<UARTE0> = ();
-    static mut TX: UarteTX<UARTE0> = ();
+    static mut TX: UarteTX<UARTE0, TXQSize> = ();
     static mut PRODUCER: Producer<'static, Box<DMAPool>, TXQSize> = ();
 
     #[init(spawn = [])]
@@ -66,8 +70,14 @@ const APP: () = {
 
         // hprintln!("{:?}", &data).unwrap();
         // just do the buffer dance without copying
-        resources.PRODUCER.enqueue(data).unwrap();
-        rtfm::pend(interrupt::UARTE0_UART0);
+        if resources.PRODUCER.enqueue(data).is_err() {
+            hprintln!("outgoing queue is overfull").unwrap();
+        } else {
+            // we need to run the interrupt handler to tell
+            // the driver that there is data to send
+            // TODO, have that built in, for the PRODUCER
+            rtfm::pend(interrupt::UARTE0_UART0);
+        }
     }
 
     #[task]
@@ -90,6 +100,7 @@ const APP: () = {
             Err(err) => spawn.rx_error(err).unwrap(),
         }
 
+        // probe TX
         resources.TX.process_interrupt();
     }
 

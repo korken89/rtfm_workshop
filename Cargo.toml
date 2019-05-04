@@ -25,7 +25,15 @@ features                = ["dev", "rt"]
 [dependencies.nrf52832-hal]
 version          = "0.8.1"
 default-features = false
-features = [ "xxAA-package", "rt" ]
+#features = [ "DMA_SIZE_4", "xxAA-package", "rt" ] # tested ok
+#features = [ "DMA_SIZE_8", "xxAA-package", "rt" ]
+#features = [ "DMA_SIZE_16", "xxAA-package", "rt" ] # tested ok
+#features = [ "DMA_SIZE_32", "xxAA-package", "rt" ]
+#features = [ "DMA_SIZE_64", "xxAA-package", "rt" ]
+#features = [ "DMA_SIZE_128", "xxAA-package", "rt" ] # tested ok
+#features = [ "DMA_SIZE_256", "xxAA-package", "rt" ] # tested error, causes OOM
+
+features = [ "xxAA-package", "rt" ] # DMA_SIZE_16 per default # tested ok
 
 [dependencies.cortex-m-rtfm]
 version                 = "0.4.3"
@@ -51,5 +59,6 @@ lto                     = true  # better optimizations
 
 [patch.crates-io]
 nrf52-hal-common        = { path = '../nrf52-hal/nrf52-hal-common' }
+nrf52832-hal            = { path = '../nrf52-hal/nrf52832-hal' }
 cortex-m-semihosting    = { path = "./cortex-m-semihosting"}
 dwm1001                 = { path = "../rust-dwm1001"}

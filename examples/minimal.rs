@@ -1,6 +1,6 @@
 //! minimal.rs
 //!
-//! A minial example to run, prints hello over semihosting
+//! A minimal example to run, prints hello over semihosting
 
 #![deny(unsafe_code)]
 #![no_main]

@@ -26,7 +26,7 @@ features                = ["dev", "rt"]
 [dependencies.cortex-m-rtfm]
 version                 = "0.4.3"
 features                = [
-#    "nightly",
+ #   "nightly",
     "timer-queue"
     ] # disable if not using timed messages
 

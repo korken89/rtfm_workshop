@@ -19,7 +19,7 @@ use heapless::{
     consts::*,
     pool,
     pool::singleton::{Box, Pool},
-    spsc::{Consumer, Queue},
+    spsc::{Consumer, Queue, Producer},
 };
 
 // Re-export SVD variants to allow user to directly set values
@@ -301,15 +301,16 @@ where
 
     pub fn split(
         self,
-        rxq: Queue<Box<DMAPool>, U2>,
-        txc: Consumer<'static, Box<DMAPool>, TXQSize>,
+        rxq: Queue<(Box<DMAPool>,usize), U2>,
+        txc: Consumer<'static, (Box<DMAPool>,usize), TXQSize>,
+        txp: Producer<'static, (Box<DMAPool>,usize), TXQSize>,
     ) -> (UarteRX<T>, UarteTX<T>) {
         let mut rx = UarteRX::<T>::new(rxq);
         rx.enable_interrupts();
         rx.prepare_read().unwrap();
         rx.start_read();
 
-        let tx = UarteTX::<T>::new(txc);
+        let tx = UarteTX::<T>::new(txc, txp);
         tx.enable_interrupts();
         (rx, tx)
     }
@@ -320,7 +321,7 @@ pub const DMA_SIZE: usize = 4;
 pool!(DMAPool: [u8; DMA_SIZE]);
 
 pub struct UarteRX<T> {
-    rxq: Queue<Box<DMAPool>, U2>, // double buffering of DMA chunkns
+    rxq: Queue<(Box<DMAPool>,usize), U2>, // double buffering of DMA chunkns
     _marker: core::marker::PhantomData<T>,
 }
 
@@ -335,7 +336,7 @@ impl<T> UarteRX<T>
 where
     T: UarteExt,
 {
-    fn new(rxq: Queue<Box<DMAPool>, U2>) -> Self {
+    fn new(rxq: Queue<(Box<DMAPool>,usize), U2>) -> Self {
         Self {
             rxq,
             _marker: core::marker::PhantomData,
@@ -377,7 +378,8 @@ where
             .maxcnt
             .write(|w| unsafe { w.maxcnt().bits(b.len() as _) });
 
-        if self.rxq.enqueue(b).is_err() {
+        let len = b.len();
+        if self.rxq.enqueue((b,len)).is_err() {
             Err(RXError::RxqOverflow)
         } else {
             Ok(())
@@ -406,7 +408,7 @@ where
 
             self.start_read();
 
-            return Ok(Some(ret_b)); // ok to return, rx started will be caught later
+            return Ok(Some(ret_b.0)); // ok to return, rx started will be caught later
         }
 
         // the interrupt was not RXSTARTED or ENDRX, so no action
@@ -417,7 +419,8 @@ where
 pub type TXQSize = U4;
 
 pub struct UarteTX<T> {
-    txc: Consumer<'static, Box<DMAPool>, TXQSize>, // chunks to transmit
+    txc: Consumer<'static, (Box<DMAPool>,usize), TXQSize>, // chunks to transmit
+    txp: Producer<'static, (Box<DMAPool>,usize), TXQSize>, // so we can send ourself
     current: Option<Box<DMAPool>>,
     _marker: core::marker::PhantomData<T>,
 }
@@ -426,9 +429,10 @@ impl<T> UarteTX<T>
 where
     T: UarteExt,
 {
-    fn new(txc: Consumer<'static, Box<DMAPool>, TXQSize>) -> Self {
+    fn new(txc: Consumer<'static, (Box<DMAPool>,usize), TXQSize>, txp: Producer<'static, (Box<DMAPool>,usize), TXQSize>) -> Self {
         Self {
             txc,
+            txp,
             current: None,
             _marker: core::marker::PhantomData,
         }
@@ -440,22 +444,26 @@ where
         uarte.inten.modify(|_, w| w.endtx().set_bit());
     }
 
-    pub fn start_write(&mut self, b: Box<DMAPool>) {
+    pub fn enqueue(&mut self, b: (Box<DMAPool>,usize)) {
+        self.txp.enqueue(b).unwrap();
+    }
+
+    pub fn start_write(&mut self, b: (Box<DMAPool>,usize)) {
         let uarte = unsafe { &*T::ptr() };
         compiler_fence(SeqCst);
         // setup start address
         uarte
             .txd
             .ptr
-            .write(|w| unsafe { w.ptr().bits(b.as_ptr() as u32) });
+            .write(|w| unsafe { w.ptr().bits(b.0.as_ptr() as u32) });
         // setup length
         uarte
             .txd
             .maxcnt
-            .write(|w| unsafe { w.maxcnt().bits(b.len() as _) });
+            .write(|w| unsafe { w.maxcnt().bits(b.1 as _) });
         // Start UARTE transmit transaction
         uarte.tasks_starttx.write(|w| unsafe { w.bits(1) });
-        self.current = Some(b); // drops the previous current package
+        self.current = Some(b.0); // drops the previous current package
     }
 
     pub fn process_interrupt(&mut self) {
@@ -474,6 +482,7 @@ where
                     self.current = None;
                 }
                 Some(b) => {
+                    
                     self.start_write(b);
                 }
             }
@@ -486,12 +495,29 @@ where
                     Some(b) =>
                     // we were idle, so start a new transaction
                     {
+                        
                         self.start_write(b)
                     }
                     None => (),
                 }
             }
         }
+    }
+}
+
+impl<T> fmt::Write for UarteTX<T>
+where
+    T: UarteExt,
+{
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        for block in s.as_bytes().chunks(DMA_SIZE) {
+            let mut buf = DMAPool::alloc().ok_or(fmt::Error)?.freeze();
+            buf[..block.len()].copy_from_slice(block);
+            self.txp.enqueue((buf, block.len())).unwrap();
+            //rtfm::pend(interrupt::UARTE0_UART0);
+            self.process_interrupt();
+        }
+        Ok(())
     }
 }
 

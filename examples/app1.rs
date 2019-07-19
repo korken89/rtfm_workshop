@@ -24,17 +24,16 @@ use rtfm::app;
 #[rustfmt::skip] 
 #[derive(Copy, Clone, Debug)]
 #[allow(non_snake_case)]
-#[repr(C, align(16))]
+#[repr(C)]
 pub struct stack_frame {
-    // align: u32, // padding 00, aligned to 16 byte
-    R0: u32,    // padding 04, lowest address
-    R1: u32,    // padding 08
-    R2: u32,    // padding 0c
-    R3: u32,    // padding 10
-    R12: u32,   // padding 14
-    LR: u32,    // padding 18
-    PC: u32,    // padding 1C
-    xPSR: u32,  // padding 20 
+    R0:   u32,    // lowest address, top of stack frame
+    R1:   u32,    
+    R2:   u32,    
+    R3:   u32,    
+    R12:  u32,   
+    LR:   u32,    
+    PC:   u32,    
+    xPSR: u32,   
 }
 
 // here we allocate the user stack

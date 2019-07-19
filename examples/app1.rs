@@ -122,6 +122,9 @@ const APP: () = {
         // PC points to next thumb (16 bit) instruction
         // We read the previous instruction (SVC) from memory (first byte is immediate field)
         let syscall_nr = unsafe { core::ptr::read_volatile((pc - 2) as *const u8) };
+        // use the psp stack for accessing syscall number and arguments
+        // we may not trust that raw registers (R0, etc.) have correct values
+        // due to possible preemption (if SVCall is not set at highest prio)
 
         hprintln!("SVCALL {}", syscall_nr).unwrap();
         // hprintln!("Stack {:?}", psp_stack).unwrap();

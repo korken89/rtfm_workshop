@@ -1,57 +1,23 @@
 //! app1.rs
 //!
-//! Example of utilizing pend, the minimal RTFM example!
 
 #![no_main]
 #![no_std]
 #![feature(asm, const_fn, core_intrinsics, naked_functions)]
 
-use core::sync::atomic::{self, Ordering};
-// use cortex_m::asm;
 use cortex_m_rt::ExceptionFrame;
-
-// pub use cortexm::nvic;
-pub use cortex_m::register::psp;
-// pub use cortexm::syscall;
-// pub use cortexm::systick;
-
-// panic handler
 extern crate panic_semihosting;
 
 use cortex_m_semihosting::hprintln;
 use dwm1001::nrf52832_hal as hal;
-// use hal::nrf52832_pac as pac;
-// use pac::interrupt;
+
+pub use cortex_m::register::psp;
 use embedded_hal::digital::OutputPin;
 use hal::gpio;
 use hal::gpio::p0::*;
 use hal::gpio::*;
 use hal::prelude::GpioExt;
 use rtfm::app;
-
-// Return to Handler mode, exception return uses non-floating-point state
-// from the MSP and execution uses MSP after return.
-// const RETURN_TO_HANDER_MODE_NO_FP_MSP: u32 = 0xFFFFFFF1;
-
-// Return to Thread mode, exception return uses non-floating-point state from
-// MSP and execution uses MSP after return.
-// const RETURN_TO_HANDER_MODE_FP_MSP: u32 = 0xFFFFFFF9;
-
-// Return to Thread mode, exception return uses non-floating-point state from
-// the PSP and execution uses PSP after return.
-// const RETURN_TO_THREAD_MODE_NO_FP_PSP: u32 = 0xFFFFFFFD;
-
-// Return to Handler mode, exception return uses floating-point-state from
-// MSP and execution uses MSP after return.
-// const RETURN_TO_THREAD_MODE_FP_MSP: u32 = 0xFFFFFFE1;
-
-// Return to Thread mode, exception return uses floating-point state from
-// MSP and execution uses MSP after return.
-// const RETURN_TO_THREAD_MODE_NO_FP_MSP: u32 = 0xFFFFFFE9;
-
-// Return to Thread mode, exception return uses floating-point state from PSP
-// and execution uses PSP after return.
-// const RETURN_TO_THREAD_MODE_FP_PSP: u32 = 0xFFFFFFED;
 
 // http://infocenter.arm.com/help/topic/com.arm.doc.dui0553b/DUI0553.pdf
 // exception stack frame
@@ -71,56 +37,31 @@ pub struct stack_frame {
     xPSR: u32,  // padding 20 
 }
 
-impl stack_frame {
-    const fn new() -> stack_frame {
-        stack_frame {
-            // align: 0,
-            R0: 0,
-            R1: 0,
-            R2: 0,
-            R3: 0,
-            R12: 0,
-            LR: 0,
-            PC: 0,
-            xPSR: 0,
-        }
-    }
-}
-
-// fn switch_to_user(
-//     mut user_stack: *const usize,
-//     process_regs: &mut [usize; 8],
-// ) -> *const usize {
-//     asm!("
-//     /* Load bottom of stack into Process Stack Pointer */
-//     msr psp, $0
-
-//     /* Load non-hardware-stacked registers from Process stack */
-//     /* Ensure that $2 is stored in a callee saved register */
-//     ldmia $2, {r4-r11}
-
-//     /* SWITCH */
-//     svc 0xff /* It doesn't matter which SVC number we use here */
-//     /* Push non-hardware-stacked registers into Process struct's */
-//     /* regs field */
-//     stmia $2, {r4-r11}
-
-//     mrs $0, PSP /* PSP into r0 */"
-//     : "={r0}"(user_stack)
-//     : "{r0}"(user_stack), "{r1}"(process_regs)
-//     : "r4","r5","r6","r7","r8","r9","r10","r11" : "volatile" );
-//     user_stack
-// }
-
+// here we allocate the user stack
+// we could think of using fixed location
+// outside of the ram region for the RTFM kernel
 static mut STACK: [u32; 1024] = [0; 1024];
-const PERIOD: u32 = 64_000_000;
+
+// SVC definitions, maybe enum is better
+const SVC_COMMAND: u8 = 2; // user command
+
+// User land LED driver
+// major, driver number, maybe enum is better
+const LED_IO: usize = 1;
+// minor, driver command, maybe enum is better
+const LED_OFF: usize = 0;
+const LED_ON: usize = 1;
+const LED_START: usize = 2;
+const LED_STOP: usize = 3;
+const LED_GET_PERIOD: usize = 4;
+const LED_SET_PERIOD: usize = 5;
 
 #[app(device = crate::hal::target)]
 const APP: () = {
-    // static mut STACK: [stack_frame; 10] = [stack_frame::new(); 10];
+    static mut LED_RUN: bool = false;
+    static mut LED_PERIOD: u32 = 64_000_000;
     static mut LED: P0_14<gpio::Output<PushPull>> = ();
 
-    //    #[init(spawn = [low])]
     #[init]
     fn init() -> init::LateResources {
         hprintln!("init").unwrap();
@@ -128,31 +69,12 @@ const APP: () = {
         let port0 = device.P0.split();
         let led = port0.p0_14.into_push_pull_output(Level::High);
 
-        // spawn.low().unwrap();
-
         init::LateResources { LED: led }
     }
 
-    // #[idle(resources = [STACK])]
     #[idle]
     fn idle() -> ! {
         hprintln!("idle").unwrap();
-
-        // let user_stack = stack_frame {
-        //     align: 0,
-        //     R0: 0,
-        //     R1: 1,
-        //     R2: 2,
-        //     R3: 3,
-        //     R12: 12,
-        //     LR: 0x0000_0001, // not relevant I believe
-        //     PC: tock_fn as u32,
-        //     //xPSR: 0x0100_0000, // thumb mode on return
-        //     xPSR: 0x0100_0000, // thumb mode on return
-        //                        //   28   24   20   16   12    8    4    0
-        //                        //    |    |    |    |    |    |    |    |
-        //                        // NZCV ---T ---- ---- ---- ---- ---E EEEE
-        // };
 
         // setup PSP for entering user land
         unsafe {
@@ -173,10 +95,31 @@ const APP: () = {
         loop {}
     }
 
-    #[exception]
+    #[task(schedule = [high], resources = [LED_PERIOD, LED_RUN, LED])]
+    fn low() {
+        resources.LED.set_low();
+
+        if *resources.LED_RUN {
+            schedule
+                .high(scheduled + resources.LED_PERIOD.cycles())
+                .unwrap();
+        }
+    }
+
+    #[task(schedule = [low], resources = [LED_PERIOD, LED_RUN, LED])]
+    fn high() {
+        resources.LED.set_high();
+        if *resources.LED_RUN {
+            schedule
+                .low(scheduled + resources.LED_PERIOD.cycles())
+                .unwrap();
+        }
+    }
+
+    #[exception(spawn = [low],resources = [LED_PERIOD, LED_RUN, LED])]
     fn SVCall() {
         let psp = psp::read();
-        let psp_stack = unsafe { &*(psp as *const stack_frame) };
+        let psp_stack = unsafe { &mut *(psp as *mut stack_frame) };
         let pc = psp_stack.PC;
         // PC points to next thumb (16 bit) instruction
         // We read the previous instruction (SVC) from memory (first byte is immediate field)
@@ -184,15 +127,54 @@ const APP: () = {
 
         hprintln!("SVCALL {}", syscall_nr).unwrap();
         // hprintln!("Stack {:?}", psp_stack).unwrap();
+
+        // this should be factored out to driver
+        match syscall_nr {
+            SVC_COMMAND => match psp_stack.R0 as usize {
+                LED_IO => {
+                    hprintln!("led driver").unwrap();
+                    match psp_stack.R1 as usize {
+                        LED_ON => {
+                            hprintln!("led-on").unwrap();
+                            resources.LED.set_low();
+                        }
+                        LED_OFF => {
+                            hprintln!("led-off").unwrap();
+                            resources.LED.set_high();
+                        }
+                        LED_START => {
+                            hprintln!("led-start").unwrap();
+                            *resources.LED_RUN = true;
+                            spawn.low().unwrap();
+                        }
+                        LED_STOP => {
+                            hprintln!("led-stop").unwrap();
+                            *resources.LED_RUN = false
+                        }
+                        LED_GET_PERIOD => {
+                            hprintln!("led-get-period").unwrap();
+                            psp_stack.R0 = *resources.LED_PERIOD;
+                        }
+                        LED_SET_PERIOD => {
+                            hprintln!("led-set-period").unwrap();
+                            *resources.LED_PERIOD = psp_stack.R2;
+                        }
+                        _ => {
+                            hprintln!("unkown command").unwrap();
+                        }
+                    }
+                }
+                _ => {
+                    hprintln!("unknown driver").unwrap();
+                }
+            },
+            _ => {
+                hprintln!("unknown SVC command").unwrap();
+            }
+        }
     }
 
-    #[interrupt]
-    fn SWI0_EGU0() {
-        static mut TIMES: u32 = 0;
-        *TIMES += 1;
-        hprintln!("SWIO_EGU0 {}", TIMES).unwrap();
-    }
-
+    // a non used interrupt handler for the tasks
     extern "C" {
         fn SWI1_EGU1();
     }
@@ -205,41 +187,67 @@ unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
     loop {}
 }
 
-//#[naked]
-
 // user land API
 
 // borrowed from Tock
-fn command(major: usize, minor: usize, arg1: usize, arg2: usize) -> isize {
+unsafe fn command(major: usize, minor: usize, arg1: usize, arg2: usize) -> isize {
     let res;
-    unsafe {
-        asm!("svc 2" : "={r0}"(res)
+    asm!("svc 2" : "={r0}"(res)
                  : "{r0}"(major) "{r1}"(minor) "{r2}"(arg1) "{r3}"(arg2)
                  : "memory"
                  : "volatile");
-    }
+
     res
 }
 
-// user land application
-#[inline(never)]
-fn user_function(a: u32) {
-    hprintln!("a = {}", a).unwrap();
-    if a > 0 {
-        user_function(a - 1);
+fn led_on() {
+    unsafe {
+        command(LED_IO, LED_ON, 0, 0);
     }
 }
 
+fn led_off() {
+    unsafe {
+        command(LED_IO, LED_OFF, 0, 0);
+    }
+}
+
+fn led_start() {
+    unsafe {
+        command(LED_IO, LED_START, 0, 0);
+    }
+}
+
+fn led_stop() {
+    unsafe {
+        command(LED_IO, LED_STOP, 0, 0);
+    }
+}
+
+fn led_get_period() -> u32 {
+    unsafe { command(LED_IO, LED_GET_PERIOD, 0, 0) as u32 }
+}
+
+fn led_set_period(period: u32) {
+    unsafe {
+        command(LED_IO, LED_SET_PERIOD, period as usize, 0);
+    }
+}
+
+// user land application
+// notice, stepping the code wont progress systic, thus no blinking
 fn user_main() -> ! {
     hprintln!("user_main").unwrap();
-    user_function(2);
 
-    let ret = command(1, 2, 3, 4);
-    hprintln!("ret = {}", ret).unwrap();
-
-    let ret = command(2, 3, 4, 5);
-    hprintln!("ret = {}", ret).unwrap();
-
+    led_on();
+    led_off();
+    let period = led_get_period();
+    hprintln!("period {}", period).unwrap();
+    led_start();
+    cortex_m::asm::delay(period * 10);
+    led_set_period(period / 10);
+    cortex_m::asm::delay(period * 10);
+    led_stop();
     loop {}
 }
 

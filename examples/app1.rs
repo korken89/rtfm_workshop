@@ -11,7 +11,7 @@ extern crate panic_semihosting;
 use cortex_m_semihosting::hprintln;
 use dwm1001::nrf52832_hal as hal;
 
-pub use cortex_m::register::psp;
+pub use cortex_m::register::{msp, psp};
 use embedded_hal::digital::OutputPin;
 use hal::gpio;
 use hal::gpio::p0::*;
@@ -64,6 +64,8 @@ const APP: () = {
     #[init]
     fn init() -> init::LateResources {
         hprintln!("init").unwrap();
+        hprintln!("msp {}", msp::read()).unwrap(); // reads 536936024, indicates unprivilidged mode
+    
 
         let port0 = device.P0.split();
         let led = port0.p0_14.into_push_pull_output(Level::High);
@@ -82,8 +84,7 @@ const APP: () = {
             // Set thread mode to unprivileged and use PSP
             asm!("
                 mov r0, #3 
-                msr CONTROL, r0"
-             : : : : "volatile"
+                msr CONTROL, r0" :::: "volatile"
             );
         };
 
@@ -239,6 +240,7 @@ fn led_set_period(period: u32) {
 // notice, stepping the code wont progress systic, thus no blinking
 fn user_main() -> ! {
     hprintln!("user_main").unwrap();
+    hprintln!("msp {}", msp::read()).unwrap(); // reads 0, indicates unprivilidged mode
 
     led_on();
     led_off();

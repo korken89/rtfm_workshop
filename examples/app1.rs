@@ -22,6 +22,11 @@ use cortex_m_semihosting::hprintln;
 use dwm1001::nrf52832_hal as hal;
 // use hal::nrf52832_pac as pac;
 // use pac::interrupt;
+use embedded_hal::digital::OutputPin;
+use hal::gpio;
+use hal::gpio::p0::*;
+use hal::gpio::*;
+use hal::prelude::GpioExt;
 use rtfm::app;
 
 // Return to Handler mode, exception return uses non-floating-point state
@@ -113,12 +118,21 @@ const PERIOD: u32 = 64_000_000;
 #[app(device = crate::hal::target)]
 const APP: () = {
     // static mut STACK: [stack_frame; 10] = [stack_frame::new(); 10];
+    static mut LED: P0_14<gpio::Output<PushPull>> = ();
 
+    //    #[init(spawn = [low])]
     #[init]
-    fn init() {
+    fn init() -> init::LateResources {
         hprintln!("init").unwrap();
-        // rtfm::pend(interrupt::SWI0_EGU0);
+
+        let port0 = device.P0.split();
+        let led = port0.p0_14.into_push_pull_output(Level::High);
+
+        // spawn.low().unwrap();
+
+        init::LateResources { LED: led }
     }
+
     // #[idle(resources = [STACK])]
     #[idle]
     fn idle() -> ! {
@@ -144,12 +158,12 @@ const APP: () = {
         unsafe {
             // set the PSP in the middle of the user land ram
             psp::write(&STACK[512] as *const _ as _);
-            // Set thread mode to unprivileged and use PSP     
+            // Set thread mode to unprivileged and use PSP
             asm!("
                 mov r0, #3 
                 msr CONTROL, r0"
-                 : : : : "volatile"
-                );
+             : : : : "volatile"
+            );
         };
 
         user_init();
@@ -166,34 +180,10 @@ const APP: () = {
         let pc = psp_stack.PC;
         // PC points to next thumb (16 bit) instruction
         // We read the previous instruction (SVC) from memory (first byte is immediate field)
-        let syscall_nr = unsafe { core::ptr::read_volatile((pc - 2) as *const u8) }; 
-
-        // unsafe {
-        //     asm!("
-        //         // Set thread mode to unprivileged
-        //         // mov r0, #1
-        //         mrs CONTROL, r0
-        //         // msr psp, r1 // r1 will point to the top of the user stack
-        //         svc #124"
-        //          : "{r1}" (syscall_nr) : : : "volatile");
-        // }
+        let syscall_nr = unsafe { core::ptr::read_volatile((pc - 2) as *const u8) };
 
         hprintln!("SVCALL {}", syscall_nr).unwrap();
-        hprintln!("Stack {:?}", psp_stack).unwrap();
-
-        // unsafe {
-        //     asm!(
-        //         "
-        //         // Return to Thread mode, exception return uses non-floating-point state from
-        //         // the PSP and execution uses PSP after return.
-        //         movw lr, #0xfffd
-        //         movt lr, #0xffff // RETURN_TO_THREAD_MODE_NO_FP_PSP
-        //         bx lr"
-        //             : : : : "volatile"
-        //     );
-        // }
-        // hprintln!("SVCALL ERROR").unwrap();
-        // loop {}
+        // hprintln!("Stack {:?}", psp_stack).unwrap();
     }
 
     #[interrupt]
@@ -201,6 +191,10 @@ const APP: () = {
         static mut TIMES: u32 = 0;
         *TIMES += 1;
         hprintln!("SWIO_EGU0 {}", TIMES).unwrap();
+    }
+
+    extern "C" {
+        fn SWI1_EGU1();
     }
 };
 
@@ -219,7 +213,7 @@ unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
 fn command(major: usize, minor: usize, arg1: usize, arg2: usize) -> isize {
     let res;
     unsafe {
-    asm!("svc 2" : "={r0}"(res)
+        asm!("svc 2" : "={r0}"(res)
                  : "{r0}"(major) "{r1}"(minor) "{r2}"(arg1) "{r3}"(arg2)
                  : "memory"
                  : "volatile");
@@ -239,11 +233,11 @@ fn user_function(a: u32) {
 fn user_main() -> ! {
     hprintln!("user_main").unwrap();
     user_function(2);
-    
-    let ret = command(1,2,3,4);
+
+    let ret = command(1, 2, 3, 4);
     hprintln!("ret = {}", ret).unwrap();
 
-    let ret = command(2,3,4,5);
+    let ret = command(2, 3, 4, 5);
     hprintln!("ret = {}", ret).unwrap();
 
     loop {}

@@ -108,6 +108,7 @@ impl stack_frame {
 // }
 
 static mut STACK: [u32; 1024] = [0; 1024];
+const PERIOD: u32 = 64_000_000;
 
 #[app(device = crate::hal::target)]
 const APP: () = {
@@ -139,47 +140,22 @@ const APP: () = {
         //                        // NZCV ---T ---- ---- ---- ---- ---E EEEE
         // };
 
-        // resources.STACK[9] = user_stack;
-        // hprintln!("PSP = {:8x?}", (&resources.STACK[9].R0) as *const u32).unwrap();
-        // hprintln!("[xPSR] = {:8x?}", resources.STACK[9].xPSR).unwrap();
-        // hprintln!("PC = {:8x?}", resources.STACK[9].PC).unwrap();
-
-        // let top_of_stack = &resources.STACK[9].R0;
-        unsafe { psp::write(&STACK[512] as *const _ as _) };
-
-        // unsafe {
-        //     asm!(
-        //         "
-        //         // Return to Thread mode, exception return uses non-floating-point state from
-        //         // the PSP and execution uses PSP after return.
-        //         movw lr, #0xfffd
-        //         movt lr, #0xffff // RETURN_TO_THREAD_MODE_NO_FP_PSP
-        //         bx lr"
-        //             : : : : "volatile"
-        //     );
-        // }
-
-        // unsafe {
-        //     asm!("
-        //         // Set thread mode to unprivileged
-        //         // mov r0, #1
-        //         // msr CONTROL, r0
-        //         // msr psp, r1 // r1 will point to the top of the user stack
-        //         svc #124"
-        //          : : "{r1}" (top_of_stack): : "volatile");
-        // }
-
+        // setup PSP for entering user land
         unsafe {
+            // set the PSP in the middle of the user land ram
+            psp::write(&STACK[512] as *const _ as _);
+            // Set thread mode to unprivileged and use PSP     
             asm!("
-                // Set thread mode to unprivileged and use PSP
                 mov r0, #3 
                 msr CONTROL, r0"
-                 : : : : "volatile");
-        }
+                 : : : : "volatile"
+                );
+        };
 
-        tock_fn();
+        user_init();
+
         // should never happen
-        hprintln!("idle").unwrap();
+        hprintln!("Internal error").unwrap();
         loop {}
     }
 
@@ -237,37 +213,43 @@ unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
 
 //#[naked]
 
+// user land API
+
+// borrowed from Tock
+fn command(major: usize, minor: usize, arg1: usize, arg2: usize) -> isize {
+    let res;
+    unsafe {
+    asm!("svc 2" : "={r0}"(res)
+                 : "{r0}"(major) "{r1}"(minor) "{r2}"(arg1) "{r3}"(arg2)
+                 : "memory"
+                 : "volatile");
+    }
+    res
+}
+
+// user land application
 #[inline(never)]
-fn tock_fn2(a: u32) {
-    hprintln!("tock fn2 ").unwrap();
+fn user_function(a: u32) {
+    hprintln!("a = {}", a).unwrap();
     if a > 0 {
-        tock_fn2(a - 1);
+        user_function(a - 1);
     }
 }
 
-fn tock_fn() {
-    unsafe { asm!("nop" :::: "volatile") };
-    unsafe { asm!("nop" :::: "volatile") };
-    unsafe { asm!("nop" :::: "volatile") };
-    unsafe { asm!("nop" :::: "volatile") };
+fn user_main() -> ! {
+    hprintln!("user_main").unwrap();
+    user_function(2);
+    
+    let ret = command(1,2,3,4);
+    hprintln!("ret = {}", ret).unwrap();
 
-    hprintln!("tock").unwrap();
-    tock_fn2(3);
-    unsafe { asm!("mov r0, #0" :::: "volatile") };
-    unsafe { asm!("mov r1, #1" :::: "volatile") };
-    unsafe { asm!("mov r2, #2" :::: "volatile") };
-    unsafe { asm!("mov r3, #3" :::: "volatile") };
-    unsafe { asm!("mov r12, #12" :::: "volatile") };
-    unsafe { asm!("svc #1" :::: "volatile"); }
+    let ret = command(2,3,4,5);
+    hprintln!("ret = {}", ret).unwrap();
 
-    unsafe { asm!("mov r0, #10" :::: "volatile") };
-    unsafe { asm!("mov r1, #11" :::: "volatile") };
-    unsafe { asm!("mov r2, #12" :::: "volatile") };
-    unsafe { asm!("mov r3, #13" :::: "volatile") };
-    unsafe { asm!("mov r12, #112" :::: "volatile") };
-    unsafe { asm!("svc #2" :::: "volatile"); }
+    loop {}
+}
 
-    loop {
-        atomic::compiler_fence(Ordering::SeqCst);
-    }
+fn user_init() {
+    hprintln!("user_init").unwrap();
+    user_main();
 }

@@ -117,8 +117,7 @@ const APP: () = {
 
     #[exception(spawn = [low],resources = [LED_PERIOD, LED_RUN, LED])]
     fn SVCall() {
-        let psp = psp::read();
-        let psp_stack = unsafe { &mut *(psp as *mut stack_frame) };
+        let psp_stack = unsafe { &mut *(psp::read() as *mut stack_frame) };
         let pc = psp_stack.PC;
         // PC points to next thumb (16 bit) instruction
         // We read the previous instruction (SVC) from memory (first byte is immediate field)

@@ -17,6 +17,9 @@ use hal::gpio;
 use hal::gpio::p0::*;
 use hal::gpio::*;
 use hal::prelude::GpioExt;
+
+use heapless::{consts::*, Vec};
+
 use rtfm::app;
 
 // http://infocenter.arm.com/help/topic/com.arm.doc.dui0553b/DUI0553.pdf
@@ -42,6 +45,7 @@ pub struct stack_frame {
 static mut STACK: [u32; 1024] = [0; 1024];
 
 // SVC definitions, maybe enum is better
+const SVC_YIELD: u8 = 0;
 const SVC_COMMAND: u8 = 2; // user command
 
 // User land LED driver
@@ -60,12 +64,12 @@ const APP: () = {
     static mut LED_RUN: bool = false;
     static mut LED_PERIOD: u32 = 64_000_000;
     static mut LED: P0_14<gpio::Output<PushPull>> = ();
+    static mut EVENTQ: Vec<(u8, u32), U8> = Vec::<_, U8>::new();
 
     #[init]
     fn init() -> init::LateResources {
         hprintln!("init").unwrap();
         hprintln!("msp {}", msp::read()).unwrap(); // reads 536936024, indicates unprivilidged mode
-    
 
         let port0 = device.P0.split();
         let led = port0.p0_14.into_push_pull_output(Level::High);
@@ -95,8 +99,9 @@ const APP: () = {
         loop {}
     }
 
-    #[task(schedule = [high], resources = [LED_PERIOD, LED_RUN, LED])]
+    #[task(schedule = [high], resources = [EVENTQ, LED_PERIOD, LED_RUN, LED])]
     fn low() {
+        static mut NUMBER: u32 = 0;
         resources.LED.set_low();
 
         if *resources.LED_RUN {
@@ -104,6 +109,8 @@ const APP: () = {
                 .high(scheduled + resources.LED_PERIOD.cycles())
                 .unwrap();
         }
+        *NUMBER += 1;
+        let _ = resources.EVENTQ.push((1, *NUMBER));
     }
 
     #[task(schedule = [low], resources = [LED_PERIOD, LED_RUN, LED])]
@@ -116,7 +123,7 @@ const APP: () = {
         }
     }
 
-    #[exception(spawn = [low],resources = [LED_PERIOD, LED_RUN, LED])]
+    #[exception(spawn = [low],resources = [EVENTQ, LED_PERIOD, LED_RUN, LED])]
     fn SVCall() {
         let psp_stack = unsafe { &mut *(psp::read() as *mut stack_frame) };
         let pc = psp_stack.PC;
@@ -132,6 +139,17 @@ const APP: () = {
 
         // this should be factored out to driver
         match syscall_nr {
+            SVC_YIELD => {
+                hprintln!("kernel-yield").unwrap();
+                if let Some(event) = resources.EVENTQ.pop() {
+                    hprintln!("event {:?}", event).unwrap();
+                    psp_stack.R0 = event.0 as u32;
+                    psp_stack.R1 = event.1 as u32;
+                } else {
+                    hprintln!("eventq empty").unwrap();
+                    psp_stack.R0 = 0;
+                }
+            }
             SVC_COMMAND => match psp_stack.R0 as usize {
                 LED_IO => {
                     hprintln!("led driver").unwrap();
@@ -194,12 +212,34 @@ unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
 // borrowed from Tock
 unsafe fn command(major: usize, minor: usize, arg1: usize, arg2: usize) -> isize {
     let res;
-    asm!("svc 2" : "={r0}"(res)
+    asm!("svc #2" : "={r0}"(res)
                  : "{r0}"(major) "{r1}"(minor) "{r2}"(arg1) "{r3}"(arg2)
                  : "memory"
                  : "volatile");
 
     res
+}
+
+static mut CALLBACK: [Option<&'static dyn Fn(u32) -> ()>; 50] = [None; 50];
+
+fn _yield() {
+    let event: u32;
+    let data: u32;
+    unsafe { asm!("svc #0" : "={r0}"(event) "={r1}" (data):::: "volatile") }
+    hprintln!("event {} data {}", event, data).unwrap();
+    if event > 0 {
+        if let Some(address) = unsafe { CALLBACK[event as usize] } {
+            address(data);
+        } else {
+            hprintln!("no handler installed").unwrap();
+        }
+    }
+}
+
+fn _yield_for(cond: &'static mut bool) {
+    while !*cond {
+        _yield()
+    }
 }
 
 fn led_on() {
@@ -236,19 +276,46 @@ fn led_set_period(period: u32) {
     }
 }
 
+fn led_set_callback(address: &'static dyn Fn(u32) -> ()) {
+    unsafe {
+        CALLBACK[1] = Some(address);
+    }
+}
+
 // user land application
+
+static mut F: bool = false;
+
+fn user_callback(data: u32) {
+    hprintln!("cb data {}", data).unwrap();
+    if data == 1 {
+        unsafe {
+            F = true;
+        }
+    }
+}
+
 // notice, stepping the code wont progress systic, thus no blinking
 fn user_main() -> ! {
     hprintln!("user_main").unwrap();
     hprintln!("msp {}", msp::read()).unwrap(); // reads 0, indicates unprivilidged mode
 
-    led_on();
-    led_off();
+    led_set_callback(&user_callback);
+    _yield();
+
+    // led_on();
+    // led_off();
     let period = led_get_period();
+    led_set_period(period / 10);
     hprintln!("period {}", period).unwrap();
     led_start();
-    cortex_m::asm::delay(period * 10);
-    led_set_period(period / 10);
+
+    // during one period we can 5 enqueued events
+    cortex_m::asm::delay(period);
+    _yield_for(unsafe { &mut F });
+    hprintln!("passed yield cond").unwrap();
+
+    // led_set_period(period / 10);
     cortex_m::asm::delay(period * 10);
     led_stop();
     loop {}
